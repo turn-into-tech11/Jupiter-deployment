@@ -1,0 +1,42 @@
+# Copyright (c) Jupyter Development Team.
+# Distributed under the terms of the Modified BSD License.
+
+# JupyterHub docker compose configuration file
+version: "3"
+
+services:
+  hub:
+    build:
+      context: .
+      dockerfile: Dockerfile.jupyterhub
+      args:
+        JUPYTERHUB_VERSION: latest
+    restart: always
+    image: jupyterhub
+    container_name: jupyterhub
+    networks:
+      - jupyterhub-network
+    volumes:
+       - "./jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py:ro"
+       #- "/run/user/995/podman/podman.sock:/var/run/docker.sock"          # ✅ CORRECT
+       - "jupyterhub-data:/data"
+    ports:
+      - "8000:8000"
+    environment:
+      # This username will be a JupyterHub admin
+      JUPYTERHUB_ADMIN: admin
+      # All containers will join this network
+      DOCKER_NETWORK_NAME: jupyterhub-network
+      # JupyterHub will spawn this Notebook image for users
+      DOCKER_NOTEBOOK_IMAGE: quay.io/jupyter/base-notebook:latest
+      # Notebook directory inside user image
+      DOCKER_NOTEBOOK_DIR: /home/jovyan/work
+      DOCKER_HOST: unix://$XDG_RUNTIME_DIR/podman/podman.sock #Tell it to use Docker-compatible socket 
+
+
+volumes:
+  jupyterhub-data:
+
+networks:
+  jupyterhub-network:
+    name: jupyterhub-network
